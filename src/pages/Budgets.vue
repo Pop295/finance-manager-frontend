@@ -54,14 +54,19 @@ const money = (n) => '$' + Number(n || 0).toLocaleString()
 
 const spentByCat = computed(() => {
   const m = {}
-  tx.items.filter((t) => t.type === 'expense').forEach((t) => { m[t.categoryId] = (m[t.categoryId] || 0) + t.amount })
+  tx.items.filter((t) => t.type === 'expense').forEach((t) => { 
+    const catId = t.category_id || t.categoryId
+    m[catId] = (m[catId] || 0) + t.amount 
+})
   return m
 })
 const withSpent = computed(() => store.items.map((b) => ({
-  ...b, spent: spentByCat.value[b.categoryId] || 0,
-  color: categories.items.find((c) => c.id === b.categoryId)?.color
+  ...b,
+  spent: b.spent,
+  limit: b.amount,
+  color: categories.items.find((c) => c.id === (b.category_id || b.categoryId))?.color
 })))
-const totalSpent = computed(() => withSpent.value.reduce((s, b) => s + b.spent, 0))
+const totalSpent = computed(() => store.items.reduce((s, b) => s + (b.spent || 0), 0))
 const overBudget = computed(() => withSpent.value.filter((b) => b.spent > b.limit).map((b) => b.category))
 
 async function saveMonthly() { await store.setMonthly(Number(newMonthly.value)); toast.success('Monthly budget updated') }
