@@ -66,8 +66,9 @@ const money = (n) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFra
 const remaining = computed(() => Math.max(budgets.monthly - tx.expenses, 0))
 
 const pieData = computed(() => {
+  console.log('tx.items:', tx.items)
   const totals = {}
-  tx.items.filter((t) => t.type === 'expense').forEach((t) => { totals[t.category] = (totals[t.category] || 0) + t.amount })
+  tx.items.filter((t) => t.type === 'expense' && t.category).forEach((t) => { totals[t.category] = (totals[t.category] || 0) + t.amount })
   const labels = Object.keys(totals)
   const colors = labels.map((l) => categories.items.find((c) => c.name === l)?.color || '#cbd5e1')
   return { labels, datasets: [{ data: Object.values(totals), backgroundColor: colors, borderWidth: 0 }] }

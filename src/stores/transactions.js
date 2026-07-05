@@ -18,7 +18,10 @@ export const useTransactionsStore = defineStore('transactions', {
       finally { this.loading = false }
     },
     async add(tx) { const item = await transactionsService.create(tx); this.items.unshift(item); return item },
-    async update(id, tx) { await transactionsService.update(id, tx); this.items = this.items.map((t) => (t.id === id ? { ...t, ...tx } : t)) },
+    async update(id, tx) { 
+    await transactionsService.update(id, tx)
+    await this.fetch()  // ponovo povuci sve sa backenda
+},
     async remove(id) { await transactionsService.remove(id); this.items = this.items.filter((t) => t.id !== id) }
   }
 })
