@@ -63,7 +63,7 @@ import { useBudgetsStore } from '@/stores/budgets'
 const tx = useTransactionsStore(); const categories = useCategoriesStore(); const budgets = useBudgetsStore()
 const cols = [{ key: 't', label: 'Title' }, { key: 'c', label: 'Category' }, { key: 'd', label: 'Date' }, { key: 'a', label: 'Amount' }]
 const money = (n) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-const remaining = computed(() => Math.max(budgets.monthly - tx.expenses, 0))
+const remaining = computed(() => tx.remaining_budget ?? Math.max(budgets.monthly - tx.expenses, 0))
 
 const pieData = computed(() => {
   console.log('tx.items:', tx.items)
@@ -75,12 +75,26 @@ const pieData = computed(() => {
 })
 
 const lineData = computed(() => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+  const trend = tx.monthly_trend || []
   return {
-    labels: months,
+    labels: trend.map((m) => m.month),
     datasets: [
-      { label: 'Income', data: months.map((_, i) => 2600 + i * 90), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,.08)', fill: true, tension: .4 },
-      { label: 'Expenses', data: months.map((_, i) => 1700 + ((i * 130) % 700)), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', fill: true, tension: .4 }
+      { 
+        label: 'Income', 
+        data: trend.map((m) => m.income), 
+        borderColor: '#16a34a', 
+        backgroundColor: 'rgba(22,163,74,.08)', 
+        fill: true, 
+        tension: .4 
+      },
+      { 
+        label: 'Expenses', 
+        data: trend.map((m) => m.expenses), 
+        borderColor: '#ef4444', 
+        backgroundColor: 'rgba(239,68,68,.08)', 
+        fill: true, 
+        tension: .4 
+      }
     ]
   }
 })
