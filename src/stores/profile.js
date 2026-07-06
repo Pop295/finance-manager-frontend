@@ -6,6 +6,11 @@ export const useProfileStore = defineStore('profile', {
   actions: {
     async fetch() { this.loading = true; try { this.data = await profileService.get() } finally { this.loading = false } },
     async update(p) { this.data = await profileService.update(p); return this.data },
-    async changePassword(payload) { return profileService.changePassword(payload) }
+    async changePassword(payload) { return profileService.changePassword(payload) },
+    async uploadAvatar(formData) {
+      const { avatar } = await profileService.uploadAvatar(formData)
+      this.data.avatar = avatar
+      return avatar
+    }
   }
 })

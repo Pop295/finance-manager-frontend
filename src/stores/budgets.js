@@ -11,6 +11,11 @@ export const useBudgetsStore = defineStore('budgets', {
       finally { this.loading = false }
     },
     async updateItem(id, b) { await budgetsService.update(id, b); this.items = this.items.map((x) => (x.id === id ? { ...x, ...b } : x)) },
-    async setMonthly(v) { await budgetsService.setMonthly(v); this.monthly = v }
+    async setMonthly(v) { await budgetsService.setMonthly(v); this.monthly = v },
+    async adjustMonthly(delta) {
+      const res = await budgetsService.adjustMonthly(delta)
+      this.monthly = res.amount
+      return this.monthly
+    }
   }
 })

@@ -9,10 +9,25 @@
     <div v-else-if="store.data" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <BaseCard class="lg:col-span-1">
         <div class="flex flex-col items-center text-center">
-          <img :src="store.data.avatar" class="h-24 w-24 rounded-full object-cover ring-4 ring-brand-50" />
+          <div class="relative">
+            <img :src="store.data.avatar" class="h-24 w-24 rounded-full object-cover ring-4 ring-brand-50" />
+            <div v-if="uploadingAvatar" class="absolute inset-0 flex items-center justify-center rounded-full bg-white/60">
+              <LoadingSpinner size="sm" />
+            </div>
+          </div>
           <h3 class="mt-4 text-lg font-semibold text-slate-800">{{ store.data.name }}</h3>
           <p class="text-sm text-slate-400">{{ store.data.email }}</p>
-          <BaseButton variant="outline" class="mt-4">Change avatar</BaseButton>
+
+          <input
+            ref="avatarInput"
+            type="file"
+            accept="image/png, image/jpeg, image/webp"
+            class="hidden"
+            @change="onAvatarSelected"
+          />
+          <BaseButton variant="outline" class="mt-4" :disabled="uploadingAvatar" @click="avatarInput.click()">
+            {{ uploadingAvatar ? 'Uploading...' : 'Change avatar' }}
+          </BaseButton>
         </div>
       </BaseCard>
 
@@ -67,6 +82,9 @@ const pwd = reactive({ current: '', next: '', confirm: '' })
 const settings = reactive({ emails: true, alerts: true })
 const pwdError = ref('')
 
+const avatarInput = ref(null)
+const uploadingAvatar = ref(false)
+
 watch(() => store.data, (d) => { if (d) Object.assign(profile, { name: d.name, email: d.email, currency: d.currency }) })
 
 async function saveProfile() { await store.update({ ...profile }); toast.success('Profile updated') }
@@ -76,5 +94,39 @@ async function changePassword() {
   await store.changePassword({ current: pwd.current, next: pwd.next })
   toast.success('Password changed'); Object.assign(pwd, { current: '', next: '', confirm: '' })
 }
+
+function onAvatarSelected(e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+    toast.error('Only PNG, JPG or WEBP images are allowed')
+    avatarInput.value.value = ''
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('Image must be smaller than 5MB')
+    avatarInput.value.value = ''
+    return
+  }
+
+  uploadAvatar(file)
+}
+
+async function uploadAvatar(file) {
+  uploadingAvatar.value = true
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    await store.uploadAvatar(formData)
+    toast.success('Avatar updated')
+  } catch (err) {
+    toast.error('Failed to upload avatar')
+  } finally {
+    uploadingAvatar.value = false
+    avatarInput.value.value = ''
+  }
+}
+
 onMounted(store.fetch)
 </script>

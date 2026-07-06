@@ -15,9 +15,12 @@
           <p class="text-3xl font-bold text-slate-800">{{ money(store.monthly) }}</p>
           <p class="mt-1 text-sm text-slate-400">Spent {{ money(totalSpent) }} this month</p>
           <div class="mt-4"><ProgressBar label="Overall" :value="totalSpent" :max="store.monthly" /></div>
-          <div class="mt-4 flex gap-2">
-            <BaseInput v-model.number="newMonthly" type="number" class="flex-1" />
-            <BaseButton variant="primary" @click="saveMonthly">Update</BaseButton>
+          <div class="mt-4 space-y-2">
+            <BaseInput v-model.number="adjustAmount" type="number" min="0" placeholder="Amount" />
+            <div class="flex gap-2">
+              <BaseButton variant="primary" class="flex-1" @click="addToMonthly">+ Add</BaseButton>
+              <BaseButton variant="outline" class="flex-1" @click="subtractFromMonthly">− Subtract</BaseButton>
+            </div>
           </div>
         </BaseCard>
 
@@ -49,14 +52,14 @@ import { useCategoriesStore } from '@/stores/categories'
 import { useToastStore } from '@/stores/toast'
 
 const store = useBudgetsStore(); const tx = useTransactionsStore(); const categories = useCategoriesStore(); const toast = useToastStore()
-const newMonthly = ref(0)
+const adjustAmount = ref(0)
 const money = (n) => '$' + Number(n || 0).toLocaleString()
 
 const spentByCat = computed(() => {
   const m = {}
-  tx.items.filter((t) => t.type === 'expense').forEach((t) => { 
+  tx.items.filter((t) => t.type === 'expense').forEach((t) => {
     const catId = t.category_id || t.categoryId
-    m[catId] = (m[catId] || 0) + t.amount 
+    m[catId] = (m[catId] || 0) + t.amount
 })
   return m
 })
@@ -69,7 +72,25 @@ const withSpent = computed(() => store.items.map((b) => ({
 const totalSpent = computed(() => store.items.reduce((s, b) => s + (b.spent || 0), 0))
 const overBudget = computed(() => withSpent.value.filter((b) => b.spent > b.limit).map((b) => b.category))
 
-async function saveMonthly() { await store.setMonthly(Number(newMonthly.value)); toast.success('Monthly budget updated') }
-async function load() { await Promise.all([store.fetch(), tx.fetch(), categories.fetch()]); newMonthly.value = store.monthly }
+async function addToMonthly() {
+  if (!adjustAmount.value || adjustAmount.value <= 0) { toast.error('Enter an amount greater than 0'); return }
+  try {
+    await store.adjustMonthly(Number(adjustAmount.value))
+    toast.success('Budget increased')
+    adjustAmount.value = 0
+  } catch (e) { toast.error(e?.response?.data?.error || 'Failed to update budget') }
+}
+
+async function subtractFromMonthly() {
+  if (!adjustAmount.value || adjustAmount.value <= 0) { toast.error('Enter an amount greater than 0'); return }
+  if (adjustAmount.value > store.monthly) { toast.error('Amount exceeds current budget'); return }
+  try {
+    await store.adjustMonthly(-Number(adjustAmount.value))
+    toast.success('Budget decreased')
+    adjustAmount.value = 0
+  } catch (e) { toast.error(e?.response?.data?.error || 'Failed to update budget') }
+}
+
+async function load() { await Promise.all([store.fetch(), tx.fetch(), categories.fetch()]) }
 onMounted(load)
 </script>
