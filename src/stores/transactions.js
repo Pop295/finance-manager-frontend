@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { transactionsService } from '@/services/transactions.service'
-import api from '@/services/api'
+
 
 export const useTransactionsStore = defineStore('transactions', {
   state: () => ({ 
@@ -24,7 +24,7 @@ export const useTransactionsStore = defineStore('transactions', {
         // ucitavamo transakcije i dashboard podatke istovremeno
         const [items, dashboard] = await Promise.all([
           transactionsService.list(),
-          api.get('/dashboard').then(r => r.data)
+          transactionsService.dashboard()
         ])
         this.items = items
         this.monthly_trend = dashboard.monthly_trend || []
