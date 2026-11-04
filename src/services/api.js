@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000
 })
@@ -25,6 +27,12 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+export const assetUrl = (path) => {
+  if (!path) return ''
+  if (/^(https?:|data:|blob:)/.test(path)) return path
+  return API_BASE.replace(/\/api\/?$/, '') + path
+}
 
 export const USE_MOCK = String(import.meta.env.VITE_USE_MOCK ?? 'true') === 'true'
 export default api

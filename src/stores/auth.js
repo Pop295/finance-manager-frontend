@@ -29,6 +29,12 @@ export const useAuthStore = defineStore('auth', {
         this.token = token; this.user = user; this.persist()
       } finally { this.loading = false }
     },
+    // Azurira podatke prijavljenog korisnika (npr. avatar) i cuva ih
+    setUser(patch) {
+      if (!this.user) return
+      this.user = { ...this.user, ...patch }
+      try { this.persist() } catch { /* localStorage pun - ignorisemo */ }
+    },
     logout() { this.token = null; this.user = null; this.persist() }
   }
 })

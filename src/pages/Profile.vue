@@ -9,10 +9,13 @@
     <div v-else-if="store.data" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <BaseCard class="lg:col-span-1">
         <div class="flex flex-col items-center text-center">
-          <img :src="store.data.avatar" class="h-24 w-24 rounded-full object-cover ring-4 ring-brand-50" />
+          <img v-if="avatarSrc" :src="avatarSrc" class="h-24 w-24 rounded-full object-cover ring-4 ring-brand-50" />
+          <div v-else class="flex h-24 w-24 items-center justify-center rounded-full bg-brand-50 text-2xl font-semibold text-brand-600 ring-4 ring-brand-50">{{ initials }}</div>
           <h3 class="mt-4 text-lg font-semibold text-slate-800">{{ store.data.name }}</h3>
           <p class="text-sm text-slate-400">{{ store.data.email }}</p>
-          <BaseButton variant="outline" class="mt-4">Change avatar</BaseButton>
+          <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden" @change="onAvatarSelected" />
+          <BaseButton variant="outline" class="mt-4" :disabled="uploading" @click="fileInput.click()">{{ uploading ? 'Uploading...' : 'Change avatar' }}</BaseButton>
+          <p class="mt-2 text-xs text-slate-400">PNG, JPG, GIF or WEBP, max 2 MB</p>
         </div>
       </BaseCard>
 
@@ -52,7 +55,7 @@
   </div>
 </template>
 <script setup>
-import { reactive, ref, watch, onMounted } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -60,12 +63,30 @@ import BaseSelect from '@/components/ui/BaseSelect.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { useProfileStore } from '@/stores/profile'
 import { useToastStore } from '@/stores/toast'
+import { assetUrl } from '@/services/api'
 
 const store = useProfileStore(); const toast = useToastStore()
 const profile = reactive({ name: '', email: '', currency: 'USD' })
 const pwd = reactive({ current: '', next: '', confirm: '' })
 const settings = reactive({ emails: true, alerts: true })
 const pwdError = ref('')
+const fileInput = ref(null)
+const uploading = ref(false)
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024
+const avatarSrc = computed(() => assetUrl(store.data?.avatar))
+const initials = computed(() => (store.data?.name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase())
+
+async function onAvatarSelected(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // omogucava ponovni izbor iste slike
+  if (!file) return
+  if (!/^image\/(png|jpeg|gif|webp)$/.test(file.type)) return toast.error('Allowed formats: PNG, JPG, GIF, WEBP')
+  if (file.size > MAX_AVATAR_SIZE) return toast.error('Image is too large (max 2 MB)')
+  uploading.value = true
+  try { await store.uploadAvatar(file); toast.success('Avatar updated') }
+  catch (err) { toast.error(err?.response?.data?.error || 'Could not upload avatar') }
+  finally { uploading.value = false }
+}
 
 watch(() => store.data, (d) => { if (d) Object.assign(profile, { name: d.name, email: d.email, currency: d.currency }) })
 

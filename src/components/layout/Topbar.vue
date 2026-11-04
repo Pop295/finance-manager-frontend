@@ -10,7 +10,7 @@
         🔔<span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
       </button>
       <RouterLink to="/profile" class="flex items-center gap-2 rounded-xl p-1 pr-3 hover:bg-slate-100">
-        <img :src="auth.user?.avatar || fallback" class="h-8 w-8 rounded-full object-cover" />
+        <img :src="assetUrl(auth.user?.avatar) || fallback" class="h-8 w-8 rounded-full object-cover" />
         <span class="hidden text-sm font-medium text-slate-700 sm:block">{{ auth.user?.name || 'User' }}</span>
       </RouterLink>
     </div>
@@ -20,6 +20,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { assetUrl } from '@/services/api'
 defineEmits(['toggle'])
 const auth = useAuthStore()
 const q = ref('')
