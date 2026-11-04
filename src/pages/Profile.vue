@@ -21,7 +21,7 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <BaseInput v-model="profile.name" label="Full name" />
             <BaseInput v-model="profile.email" label="Email" type="email" />
-            <BaseSelect v-model="profile.currency" label="Currency" :options="['USD','EUR','GBP','JPY']" />
+            <BaseSelect v-model="profile.currency" label="Currency" :options="['RSD','USD','EUR','GBP','JPY']" />
           </div>
           <div class="mt-5"><BaseButton variant="primary" @click="saveProfile">Save changes</BaseButton></div>
         </BaseCard>
@@ -69,7 +69,10 @@ const pwdError = ref('')
 
 watch(() => store.data, (d) => { if (d) Object.assign(profile, { name: d.name, email: d.email, currency: d.currency }) })
 
-async function saveProfile() { await store.update({ ...profile }); toast.success('Profile updated') }
+async function saveProfile() {
+  try { await store.update({ ...profile }); toast.success('Profile updated') }
+  catch (err) { toast.error(err?.response?.data?.error || 'Could not update profile') }
+}
 async function changePassword() {
   pwdError.value = pwd.next && pwd.next === pwd.confirm ? '' : 'Passwords do not match'
   if (pwdError.value) return
