@@ -10,19 +10,21 @@
         🔔<span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
       </button>
       <RouterLink to="/profile" class="flex items-center gap-2 rounded-xl p-1 pr-3 hover:bg-slate-100">
-        <img :src="assetUrl(auth.user?.avatar) || fallback" class="h-8 w-8 rounded-full object-cover" />
+        <img v-if="avatarSrc" :src="avatarSrc" class="h-8 w-8 rounded-full object-cover" />
+        <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-600">{{ initials }}</div>
         <span class="hidden text-sm font-medium text-slate-700 sm:block">{{ auth.user?.name || 'User' }}</span>
       </RouterLink>
     </div>
   </header>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { assetUrl } from '@/services/api'
 defineEmits(['toggle'])
 const auth = useAuthStore()
 const q = ref('')
-const fallback = 'https://i.pravatar.cc/80?img=12'
+const avatarSrc = computed(() => assetUrl(auth.user?.avatar))
+const initials = computed(() => (auth.user?.name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase())
 </script>
